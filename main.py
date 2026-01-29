@@ -31,7 +31,7 @@ OUTPUT_FOLDER = "output"        # output folder
 TRANSCRIPTION_ENGINE = "faster-whisper"  # Options: "standard", "faster-whisper" (recommended)
 
 # 🎯 Whisper Model Settings
-WHISPER_MODEL = "base"        # Options: "tiny", "base", "small", "medium", "large"
+WHISPER_MODEL = "small"       # Options: "tiny", "base", "small", "medium", "large"
 FORCE_LANGUAGE = "en"           # Force language to prevent mixing (None for auto-detect)
 
 # ⚡ Performance Settings
