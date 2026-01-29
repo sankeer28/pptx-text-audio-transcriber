@@ -1,0 +1,23 @@
+# Ignore all files in presentations folder
+presentations/*
+
+# Ignore all files in output folder
+output/*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
