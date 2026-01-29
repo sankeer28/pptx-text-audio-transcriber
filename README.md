@@ -1,20 +1,31 @@
-# 🎙️ PPTX Text and Audio Transcriber
+# PPTX Text and Audio Transcriber
 
-Extract text and transcribe audio from PowerPoint presentations using OpenAI Whisper.
+Extract text and transcribe audio from PowerPoint presentations, MP4 videos, and MP3 files using OpenAI Whisper.
 
 ## Features
 
-- 📝 **Text Extraction**: Extracts all text content from PowerPoint slides
-- 🎤 **Audio Transcription**: Uses OpenAI Whisper to transcribe embedded audio files (WAV, MP3, M4A)
-- ⚡ **GPU Acceleration**: Automatic CUDA detection with CPU fallback
-- 🎯 **Multiple Models**: Supports various Whisper model sizes (tiny, base, small, medium, large)
-- 📊 **Progress Tracking**: Real-time progress bars during processing
-- 🔧 **Configurable**: Easy-to-modify settings for performance and quality tuning
+- **Text Extraction**: Extracts all text content from PowerPoint slides
+- **Audio Transcription**: Uses faster-whisper to transcribe audio from multiple sources:
+  - PowerPoint files (.pptx) - embedded audio recordings
+  - Video files (.mp4) - audio track extraction
+  - Audio files (.mp3) - direct transcription
+- **Checkpoint/Resume Support**: Automatically saves progress during long transcriptions
+  - Resume from where you left off if interrupted
+  - Checkpoints saved every 10 segments
+  - Safe to stop with Ctrl+C anytime
+- **Live Progress Tracking**: Real-time progress bar and live checkpoint file
+  - View transcription progress in `output/[filename]_checkpoint.json`
+  - See completed segments as they're processed
+  - Track timestamp and text in real-time
+- **GPU and CPU Support**: Automatic device detection with intelligent fallback
+- **Multiple Models**: Supports various Whisper model sizes (tiny, base, small, medium, large)
+- **Configurable**: Easy-to-modify settings for performance and quality tuning
 
 ## Requirements
 
 - Python 3.8 or higher
-- CUDA-compatible GPU (optional, but recommended for faster processing)
+- ffmpeg (for MP4 video processing)
+- CUDA-compatible GPU (optional)
 
 ## Installation
 
@@ -41,42 +52,24 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. CUDA Setup (Optional but Recommended)
-
-For GPU acceleration, install CUDA and compatible PyTorch:
+### 4. Install ffmpeg
 
 #### Windows:
-1. **Install CUDA Toolkit**:
-   - Download from [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)
-   - Choose version 11.8 or 12.1 (recommended)
-   - Follow the installer instructions
-
-2. **Install cuDNN**:
-   - Download from [NVIDIA cuDNN](https://developer.nvidia.com/cudnn)
-   - Extract and copy files to CUDA installation directory
-
-3. **Install CUDA-enabled PyTorch**:
-   ```bash
-   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
-   ```
-
-#### macOS/Linux:
 ```bash
-# For CUDA 11.8
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Using chocolatey:
+choco install ffmpeg
 
-# For CUDA 12.1
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Or download from: https://ffmpeg.org/download.html
 ```
 
-### 5. Verify Installation
+#### macOS:
+```bash
+brew install ffmpeg
+```
 
-Test CUDA availability:
-```python
-import torch
-print(f"CUDA available: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
+#### Linux:
+```bash
+sudo apt install ffmpeg
 ```
 
 ## Usage
@@ -84,9 +77,12 @@ if torch.cuda.is_available():
 ### 1. Prepare Your Files
 
 - Create a `presentations` folder in the project directory
-- Place your PowerPoint files (.pptx) in the `presentations` folder
+- Place your files in the `presentations` folder:
+  - PowerPoint presentations (.pptx)
+  - Video files (.mp4)
+  - Audio files (.mp3)
 
-### 2. Run the Extractor
+### 2. Run the Transcriber
 
 ```bash
 python main.py
@@ -95,14 +91,31 @@ python main.py
 ### 3. Check Results
 
 - Extracted content will be saved in the `output` folder
-- Each PowerPoint file generates a corresponding `.txt` file with:
-  - All slide text content
-  - Transcribed audio content
-  - Processing metadata
+- Each file generates a corresponding `.txt` file with transcribed text
+- For PowerPoint files, both slide text and audio transcriptions are included
+
+### 4. Resume from Checkpoint (If Interrupted)
+
+If transcription is interrupted:
+- Simply run `python main.py` again
+- The script will automatically detect and resume from the last checkpoint
+- Progress is saved every 10 segments during transcription
+
+### 5. Monitor Live Progress
+
+While transcription is running:
+- Open `output/[filename]_checkpoint.json` to see real-time progress
+- View completed segments with timestamps and text
+- Track current position in the audio
 
 ## Configuration
 
 Edit the configuration settings at the top of `main.py`:
+
+### Transcription Engine
+```python
+TRANSCRIPTION_ENGINE = "faster-whisper"  # Options: "standard", "faster-whisper"
+```
 
 ### Folder Settings
 ```python
@@ -112,61 +125,87 @@ OUTPUT_FOLDER = "output"        # Output folder
 
 ### Whisper Model Settings
 ```python
-WHISPER_MODEL = "base"        # Options: "tiny", "base", "small", "medium", "large"
-FORCE_LANGUAGE = "en"         # Force language ("en", "es", "fr", etc.) or None for auto-detect
+WHISPER_MODEL = "small"       # Options: "tiny", "base", "small", "medium", "large"
+FORCE_LANGUAGE = "en"         # Force language ("en", "es", "fr", etc.) or None
 ```
 
 ### Performance Settings
 ```python
-FORCE_DEVICE = None           # Options: None (auto), "cpu", "cuda"
-USE_HALF_PRECISION = False    # Enable fp16 for 30-50% speed boost (GPU only)
-GPU_BEST_OF = 3              # Higher = more accurate, slower
-GPU_BEAM_SIZE = 3            # Beam search size
-```
-
-### Quality Settings
-```python
-TEMPERATURE = 0.0             # 0.0 = deterministic, 0.1-1.0 = more creative
-ENABLE_WORD_TIMESTAMPS = True # Get word-level timing data
+FORCE_DEVICE = "cpu"          # Options: None (auto), "cpu", "cuda"
+USE_HALF_PRECISION = False    # Enable fp16 for speed boost (GPU only)
 ```
 
 ## Model Size Guide
 
-| Model  | Size | Speed | Quality | VRAM Usage |
-|--------|------|-------|---------|------------|
-| tiny   | 39MB | Fastest | Good | ~1GB |
-| base   | 74MB | Fast | Better | ~1GB |
-| small  | 244MB | Medium | Good | ~2GB |
-| medium | 769MB | Slow | Very Good | ~5GB |
-| large  | 1550MB | Slowest | Best | ~10GB |
+| Model  | Speed | Quality | Memory | Best For |
+|--------|-------|---------|--------|----------|
+| tiny   | Fastest | Good | ~1GB | Quick drafts, testing |
+| base   | Fast | Better | ~1GB | General use |
+| small  | Medium | Good | ~2GB | Recommended - best balance |
+| medium | Slow | Very Good | ~5GB | High accuracy needs |
+| large  | Slowest | Best | ~10GB | Maximum quality |
+
+**Recommendation**: Use `small` model for best accuracy/speed balance on CPU.
+
+## Checkpoint System
+
+The checkpoint system automatically saves your progress during long transcriptions:
+
+### How It Works
+- Progress saved every 10 segments to `output/[filename]_checkpoint.json`
+- Checkpoint file contains:
+  - All completed segments with timestamps and text
+  - Current position in the audio
+  - File metadata (duration, language, etc.)
+- Automatically cleans up checkpoint file when transcription completes
+
+### Resume from Checkpoint
+1. If transcription is interrupted (Ctrl+C, crash, etc.)
+2. Run `python main.py` again
+3. Script automatically detects checkpoint and resumes
+4. Progress bar starts from last saved position
+
+### View Live Progress
+Open the checkpoint file while transcription is running:
+```json
+{
+  "metadata": {
+    "duration": 7820.0,
+    "language": "en",
+    "file": "..."
+  },
+  "segments": [
+    {"start": 0.0, "end": 5.2, "text": "..."},
+    {"start": 5.2, "end": 10.8, "text": "..."}
+  ]
+}
+```
 
 ## Troubleshooting
 
 ### Common Issues
 
-**1. CUDA Out of Memory**
-- Use a smaller Whisper model (`tiny` or `base`)
-- Set `USE_HALF_PRECISION = True`
-- Reduce `GPU_BEST_OF` and `GPU_BEAM_SIZE`
+**1. No ffmpeg found**
+- Install ffmpeg using instructions above
+- Verify with: `ffmpeg -version`
 
-**2. No Audio Files Found**
-- Ensure audio is embedded in PowerPoint (not linked)
-- Supported formats: WAV, MP3, M4A
+**2. GPU/CUDA Issues**
+- Set `FORCE_DEVICE = "cpu"` in main.py
+- CPU mode works perfectly with faster-whisper
 
-**3. Installation Issues**
-- Ensure Python 3.8+ is installed
-- Try installing dependencies one by one
-- Use virtual environment to avoid conflicts
+**3. Out of Memory**
+- Use smaller model (`tiny` or `base`)
+- Ensure checkpoint system is enabled for long files
 
 **4. Poor Transcription Quality**
-- Use larger Whisper model (`medium` or `large`)
+- Use larger model (`small` or `medium`)
 - Set correct language with `FORCE_LANGUAGE`
-- Increase `GPU_BEST_OF` for better accuracy
+- Ensure audio quality is good
 
 ### Performance Tips
 
-- **GPU Users**: Use `base` or `small` models for best speed/quality balance
-- **CPU Users**: Stick with `tiny` or `base` models
-- **Large Files**: Process in batches to avoid memory issues
-- **Quality Focus**: Use `medium` or `large` models with higher beam size
+- **Long Videos (1+ hours)**: Use faster-whisper on CPU with checkpoints enabled
+- **Best CPU Performance**: Use `small` model with faster-whisper
+- **Quality Focus**: Use `medium` or `large` models
+- **Speed Focus**: Use `tiny` or `base` models
 
