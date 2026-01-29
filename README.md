@@ -36,23 +36,13 @@ git clone https://github.com/sankeer28/pptx-text-audio-transcriber.git
 cd pptx-text-audio-transcriber
 ```
 
-### 2. Create Virtual Environment (Recommended)
-
-```bash
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-```
-
-### 3. Install Python Dependencies
+### 2. Install Python Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Install ffmpeg
+### 3. Install ffmpeg
 
 #### Windows:
 ```bash
@@ -76,7 +66,6 @@ sudo apt install ffmpeg
 
 ### 1. Prepare Your Files
 
-- Create a `presentations` folder in the project directory
 - Place your files in the `presentations` folder:
   - PowerPoint presentations (.pptx)
   - Video files (.mp4)
@@ -87,26 +76,6 @@ sudo apt install ffmpeg
 ```bash
 python main.py
 ```
-
-### 3. Check Results
-
-- Extracted content will be saved in the `output` folder
-- Each file generates a corresponding `.txt` file with transcribed text
-- For PowerPoint files, both slide text and audio transcriptions are included
-
-### 4. Resume from Checkpoint (If Interrupted)
-
-If transcription is interrupted:
-- Simply run `python main.py` again
-- The script will automatically detect and resume from the last checkpoint
-- Progress is saved every 10 segments during transcription
-
-### 5. Monitor Live Progress
-
-While transcription is running:
-- Open `output/[filename]_checkpoint.json` to see real-time progress
-- View completed segments with timestamps and text
-- Track current position in the audio
 
 ## Configuration
 
@@ -144,68 +113,4 @@ USE_HALF_PRECISION = False    # Enable fp16 for speed boost (GPU only)
 | small  | Medium | Good | ~2GB | Recommended - best balance |
 | medium | Slow | Very Good | ~5GB | High accuracy needs |
 | large  | Slowest | Best | ~10GB | Maximum quality |
-
-**Recommendation**: Use `small` model for best accuracy/speed balance on CPU.
-
-## Checkpoint System
-
-The checkpoint system automatically saves your progress during long transcriptions:
-
-### How It Works
-- Progress saved every 10 segments to `output/[filename]_checkpoint.json`
-- Checkpoint file contains:
-  - All completed segments with timestamps and text
-  - Current position in the audio
-  - File metadata (duration, language, etc.)
-- Automatically cleans up checkpoint file when transcription completes
-
-### Resume from Checkpoint
-1. If transcription is interrupted (Ctrl+C, crash, etc.)
-2. Run `python main.py` again
-3. Script automatically detects checkpoint and resumes
-4. Progress bar starts from last saved position
-
-### View Live Progress
-Open the checkpoint file while transcription is running:
-```json
-{
-  "metadata": {
-    "duration": 7820.0,
-    "language": "en",
-    "file": "..."
-  },
-  "segments": [
-    {"start": 0.0, "end": 5.2, "text": "..."},
-    {"start": 5.2, "end": 10.8, "text": "..."}
-  ]
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**1. No ffmpeg found**
-- Install ffmpeg using instructions above
-- Verify with: `ffmpeg -version`
-
-**2. GPU/CUDA Issues**
-- Set `FORCE_DEVICE = "cpu"` in main.py
-- CPU mode works perfectly with faster-whisper
-
-**3. Out of Memory**
-- Use smaller model (`tiny` or `base`)
-- Ensure checkpoint system is enabled for long files
-
-**4. Poor Transcription Quality**
-- Use larger model (`small` or `medium`)
-- Set correct language with `FORCE_LANGUAGE`
-- Ensure audio quality is good
-
-### Performance Tips
-
-- **Long Videos (1+ hours)**: Use faster-whisper on CPU with checkpoints enabled
-- **Best CPU Performance**: Use `small` model with faster-whisper
-- **Quality Focus**: Use `medium` or `large` models
-- **Speed Focus**: Use `tiny` or `base` models
 
