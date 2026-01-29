@@ -1,6 +1,6 @@
-# PPTX Text and Audio Transcriber
+#  Audio Transcriber
 
-Extract text and transcribe audio from PowerPoint presentations, MP4 videos, and MP3 files using OpenAI Whisper.
+Extract text and transcribe audio from PowerPoint presentations, MP4 videos, and MP3 files using Whisper.
 
 ## Features
 
@@ -30,11 +30,6 @@ Extract text and transcribe audio from PowerPoint presentations, MP4 videos, and
 ## Installation
 
 ### 1. Clone or Download the Project
-
-```bash
-git clone https://github.com/sankeer28/pptx-text-audio-transcriber.git
-cd pptx-text-audio-transcriber
-```
 
 ### 2. Install Python Dependencies
 
